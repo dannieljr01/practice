@@ -798,42 +798,239 @@ obj.method.apply({a:4},[5,6]);
 call 메서드는 첫 번째 인자를 제외한 나머지 모든 인자들을 호출할 함수의 매개변수로 지정하는 반변, apply 메서드는 두 번째 인자를 배열로 받아 그 배열의 요소들을 호출할 함수의 매개변수로 지정한다는 차이가 있음.
 ### 예제3-17(call/apply 메서드의 활용 1-1)유사배열객체에 배열 메서드를 적용)
 ```
+var obj={
+    0:'a',
+    1:'b',
+    2:'c',
+    length:3
+};
+Array.prototype.push.call(obj,'d');
+console.log(obj);
 
+var arr=Array.prototype.slice.call(obj);
+console.log(arr);
+```
+객체에는 배열 메서드를 직접 적용할 수 없음. 그러나 키가 0 또는 양의 정수인 프로퍼티가 존재하고 length 프로퍼티의 값이 0 또는 양의 정수인 객체, 즉 배열의 구조와 유사한 객체의 경우
+call 또는 apply 메서드를 이용해 배열 메서드를 차용할 수 있음.
+### 예제3-18(call/apply 메서드의 활용 1-2)arguments,NodeList에 배열 메서드를 적용)
+```
+function a(){
+    var argv=Array.prototype.slice.call(arguments);
+    argv.forEach(function(arg){
+        console.log(arg);
+    });
+}
+a(1,2,3);
 
+document.body.innerHTML='<div>a</div><div>b</div><div>c</div>';
+var nodeList=document.querySelectorAll('div');
+var nodeArr=Array.prototype.slice.call(nodeList);
+nodeArr.forEach(function(node){
+    console.log(node);
+});
+```
+함수 내부에서 접근할 수 있는 arguments 객체도 유사배열객체이므로 배열로 전환해서 활용할 수 있음. NodeList도 마찬가지.
+### 예제3-19(call/apply메서드의 활용 1-3)문자열에 배열 메서드 적용 예시)
+```
+var str='abc def';
 
+Array.prototype.push.call(str,',pushed string');
 
+Array.prototype.concat.call(str,'string');
 
+Array.prototype.every.call(str,function(char){return char !=='';});
 
+Array.prototype.some.call(str,function(char){return char !=='';});
 
+var newArr=Array.prototype.map.call(str,function(char){return char+'!';});
 
+console.log(newArr);
 
+var newStr = Array.prototype.reduce.apply(str,[
+    function(string,char,i) {return string+char+i;},
+    ''
+]);
+console.log(newStr);
+```
+유사배열객체는 call/apply 메서드를 이용해 모든 배열 메서드를 적용할 수 있음. 배열처럼 인덱스와 length프로퍼티를 지니는 문자열에 대해서도 마찬가지임.
+단, 문자열의 경우 length프로퍼티가 읽기 전용이기 대문에 원본 문자열에 변경을 가하는 메서드는 에러를 던지며, concat처럼 대상이 반드시 배열이어야 하는 경우 제대로 된 결과를 얻을 수 없음.
+### 예제3-20(call/apply 메서드의 활용 1-4)ES6의 Array.from 메서드)
+```
+var obj={
+    0:'a',
+    1:'b',
+    2:'c',
+    length:3
+};
+var arr=Array.from(obj);
+console.log(arr);
+```
+ES6에서는 유사배열객체 또는 순회 가능한 모든 종류의 데이터 타입을 배열로 전환하는 Array.from 메서드를 새로 도입함.
+### 예제3-21(call/apply 메서드의 활용 2)생성자 내부에서 다른 생성자를 호출)
+```
+function Person(name,gender){
+    this.name=name;
+    this.gender=gender;
+}
 
+function Student(name,gender,school){
+    Person.call(this,name,gender);
+    this.school=school;
+}
+function Employee(name,gender,company){
+    Person.apply(this,[name,gender]);
+    this.company=company;
+}
 
+var by=new Student('보영','female','단국대');
+var jn=new Employee('재난','male','구골');
+```
+생성자 내부에 다른 생성자와 공통된 내용이 있을 경우 call 또는 apply를 이용해 다른 생성자를 호출하면 간단하게 반복을 줄일 수 있음.
+### 예제3-22(call/apply 메서드의 활용 3-1)최대/최솟값을 구하는 코드를 직접 구현)
+```
+var numbers=[10,20,3,16,45];
+var max=min=numbers[0];
+numbers.forEach(function(number){
+    if(number>max){
+        max=number;
+    }
+    if(number<min){
+        min=number;
+    }
+});
+console.log(max,min);
+```
+배열에서 최대/최솟값을 구해야하는 경우 apply를 사용하지 않는다면 위와 같이 코드가 불필요하게 길고 가독성도 떨어짐.
+### 예제3-23(call/apply 메서드 활용 3-2)여러 인수를 받는 메서드(Math.max/Math.min)에 apply를 적용
+```
+var numbers=[10,20,3,16,45];
+var max=Math.max.apply(null,numbers);
+var min=Math.min.apply(null,numbers);
+console.log(max,min);
+```
+Math.max/Math.min 메서드에 apply를 적용하여 간단해짐.
+### 예제3-24(call/apply 메서드의 활용 3-3)ES6의 펼치기 연산자 활용)
+```
+const numbers=[10,20,3,16,45];
+const max=Math.max(...numbers);
+const min=Math.min(...numbers);
+console.log(max,min);
+```
+ES6에서는 펼치기 연산자르 이용하여 apply를 적용한 것보다 더욱 간단하게 작성할 수 있음.
+### 예제3-25(bind 메서드-this 지정과 부분 적용 함수 구현)
+```
+var func=function(a,b,c,d){
+    console.log(this,a,b,c,d);
+};
+func(1,2,3,4);
 
+var bindFunc1=func.bind({x:1});
+bindFunc1(5,6,7,8);
 
+var bindFunc2=func.bind({x:1},4,5);
+bindFunc2(6,7);
+bindFunc2(8,9);
+```
+bind 메서드는 call과 비슷하지만 즉시 호출하지는 않고 넘겨 받는 this 및 인수들을 바탕으로 새로운 함수를 반환하기만 하는 메서드임.
+bind 메서드는 함수에 this를 미리 적용하는 것과 부분 적용 함수를 구현하는 것 두 가지 목적을 지님.
+### 예제3-26(bind 메서드-name 프로퍼티)
+```
+var func=function(a,b,c,d){
+    console.log(this,a,b,c,d);
+};
+var bindFunc=func.bind({x:1},4,5);
+console.log(func.name);
+console.log(bindFunc.name);
+```
+bind 메서드를 적용해서 새로 만든 함수는 name 프로퍼티에 동사 bind의 수동태인 'bound'가 붙음. 기존의 call 이나 apply 보다 코드를 추적하기에 더 수월함.
+### 예제3-27(내부함수에 this전달-call vs. bind)
+```
+var obj={
+    outer:function(){
+        console.log(this);
+        var innerFunc=function(){
+            console.log(this);
+        };
+        innerFunc.call(this);
+    }
+};
+obj.outer();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+var obj={
+    outer:function(){
+        console.log(this);
+        var innerFunc=function(){
+            console.log(this);
+        }.bind(this);
+        innerFunc();
+    }
+};
+obj.outer();
+```
+메서드의 내부함수에서 메서드의 this를 그대로 바라보기 위한 방법으로 변수를 활용한 우회법등이 있었음. call, apply 또는 bind 메서드를 이용하면 더 깔끔하게 처리 할 수 있음.
+### 예제3-28(bind메서드-내부함수에 this전달)
+```
+var obj={
+    logThis:function(){
+        console.log(this);
+    },
+    logThisLater1:function(){
+        setTimeout(this.logThis,500);
+    },
+    logThisLater2:function(){
+        setTimeout(this.logThis.bind(this),1000);
+    }
+};
+obj.logThisLater1();
+obj.logThisLater2();
+```
+콜백 함수를 인자로 받는 함수나 메서드 중에서 기본적으로 콜백 함수 내에서의 this에 관여하느 함수 또는 메서드에 대해서도 bind 메서드를 이용하면 this값을 사용자의 입맛에 맞게 바꿀 수 있음.
+### 예제3-29(화살표 함수 내부에서의 this)
+```
+var obj={
+    outer:function(){
+        console.log(this);
+        var innerFunc=()=>{
+            console.log(this);
+        };
+        innerFunc();
+    }
+};
+obj.outer();
+```
+예제 3-27의 내부함수를 화살표 함수로 바꾸게 되면 별도의 변수로 this를 우회하거나 call/apply/bind를 적용할 필요가 업어 더욱 간결하고 편리함.
+### 예제3-30(thisArg를 받는 경우 예시-forEach메서드)
+```
+var report={
+    sum:0,
+    count:0,
+    add:function(){
+        var args=Array.prototype.slice.call(arguments);
+        args.forEach(function(entry){
+            this.sum+=entry;
+            ++this.count;
+        },this);
+    },
+    average:function(){
+        return this.sum/this.count;
+    }
+};
+report.add(60,85,95);
+console.log(report.sum,report.count,report.average());
+```
+콜백 함수를 인자로 받는 메서드 중 일부는 추가로 this로 지정할 객체(thisArg)를 인자로 지정할 수 있는 경우가 있음. 이러한 메서드의 thisArg 값을
+지정하면 콜백 함수 내부에서 this 값을 원하는 대로 변경할 수 있음. 이런 형태는 여러 내부 요소에 대해 같은 동작을 반복 수행해야 하는 배열 메서드에 많이 포진돼 있음.
+### 예제3-31(콜백 함수와 함께 thisArg를 인자로 받는 메서드)
+```
+Array.prototype.forEach(callback[,thisArg])
+Array.prototype.map(callback[,thisArg])
+Array.prototype.filter(callback[,thisArg])
+Array.prototype.some(callback[,thisArg])
+Array.prototype.every(callback[,thisArg])
+Array.prototype.find(callback[,thisArg])
+Array.prototype.findIndex(callback[,thisArg])
+Array.prototype.flatMap(callback[,thisArg])
+Array.prototype.from(arrayLike[,callback[,thisArg]])
+Set.prototype.forEach(callback[,thisArg])
+Map.prototype.forEach(callback[,thisArg])
+```
